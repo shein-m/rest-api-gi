@@ -30,13 +30,16 @@ const favoriteSchema = Joi.object({
   favorite: Joi.boolean().required(),
 });
 
-//
+const schemas = {
+  addSchema,
+  favoriteSchema,
+};
+
 contactSchema.post('save', handleMongooseError);
 
 const Contact = model('contact', contactSchema);
 
 module.exports = {
   Contact,
-  addSchema,
-  favoriteSchema,
+  schemas,
 };

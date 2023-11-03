@@ -1,5 +1,5 @@
 const { Contact, favoriteSchema } = require('../models/contact');
-const { addSchema } = require('../models/contact');
+const { schemas } = require('../models/contact');
 const HttpError = require('../helpers/HttpError');
 const { ctrlWrapper } = require('../helpers');
 
@@ -20,12 +20,6 @@ const getById = async (req, res, next) => {
 };
 
 const add = async (req, res, next) => {
-  const { error } = addSchema.validate(req.body);
-
-  if (error) {
-    throw HttpError(400, error.message);
-  }
-
   const result = await Contact.create(req.body);
   res.status(201).json(result);
 };
@@ -48,11 +42,6 @@ const update = async (req, res, next) => {
     throw HttpError(400, 'missing field');
   }
 
-  const { error } = addSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, error.message);
-  }
-
   const result = await Contact.findByIdAndUpdate(contactId, req.body);
   if (!result) {
     throw HttpError(404, 'Not found');
@@ -66,11 +55,6 @@ const updateStatusContact = async (req, res, next) => {
 
   if (Object.keys(req.body).length === 0) {
     throw HttpError(400, 'missing field favorite');
-  }
-
-  const { error } = favoriteSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, error.message);
   }
 
   const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
