@@ -43,6 +43,7 @@ const signIn = async (req, res, next) => {
   }
 
   const token = jwt.sign({ id: currentUser._id }, SECRET_KEY, { expiresIn: '23h' });
+  await User.findByIdAndUpdate(currentUser._id, { token });
 
   res.json({
     token,
@@ -53,7 +54,40 @@ const signIn = async (req, res, next) => {
   });
 };
 
+const current = async (req, res, next) => {
+  const { email, subscription } = req.user;
+
+  res.json({ email, subscription });
+};
+
+const logout = async (req, res, next) => {
+  const { _id } = req.user;
+
+  await User.findByIdAndUpdate(_id, { token: '' });
+
+  res.status(204).send();
+};
+
+const subscribe = async (req, res, next) => {
+  const list = ['starter', 'pro', 'business'];
+  const { _id } = req.user;
+  const { subscription } = req.body;
+
+  const validateSub = list.find(el => el === subscription);
+
+  if (!validateSub) {
+    throw HttpError(404);
+  }
+
+  const result = await User.findByIdAndUpdate(_id, { subscription: validateSub }, { new: true });
+
+  res.json({ email: result.email, subscription: result.subscription });
+};
+
 module.exports = {
   signUp: ctrlWrapper(signUp),
   signIn: ctrlWrapper(signIn),
+  current: ctrlWrapper(current),
+  logout: ctrlWrapper(logout),
+  subscribe: ctrlWrapper(subscribe),
 };
