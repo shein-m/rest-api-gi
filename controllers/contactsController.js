@@ -1,10 +1,18 @@
-const { Contact, favoriteSchema } = require('../models/contact');
-const { addSchema } = require('../models/contact');
+const { Contact } = require('../models/contact');
 const HttpError = require('../helpers/HttpError');
 const { ctrlWrapper } = require('../helpers');
 
 const getAll = async (req, res, next) => {
-  const result = await Contact.find();
+  const { _id: owner } = req.user;
+
+  // pagination
+  const { page = 1, limit = 20, favorite = null } = req.query;
+  const skip = (page - 1) * limit;
+
+  // filter contacts by favorite field
+  const searchParams = favorite !== null ? { owner, favorite } : { owner };
+
+  const result = await Contact.find({ ...searchParams }, null, { skip, limit });
   res.json(result);
 };
 
@@ -20,13 +28,9 @@ const getById = async (req, res, next) => {
 };
 
 const add = async (req, res, next) => {
-  const { error } = addSchema.validate(req.body);
+  const { _id: owner } = req.user;
 
-  if (error) {
-    throw HttpError(400, error.message);
-  }
-
-  const result = await Contact.create(req.body);
+  const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
 };
 
@@ -48,11 +52,6 @@ const update = async (req, res, next) => {
     throw HttpError(400, 'missing field');
   }
 
-  const { error } = addSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, error.message);
-  }
-
   const result = await Contact.findByIdAndUpdate(contactId, req.body);
   if (!result) {
     throw HttpError(404, 'Not found');
@@ -66,11 +65,6 @@ const updateStatusContact = async (req, res, next) => {
 
   if (Object.keys(req.body).length === 0) {
     throw HttpError(400, 'missing field favorite');
-  }
-
-  const { error } = favoriteSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, error.message);
   }
 
   const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
